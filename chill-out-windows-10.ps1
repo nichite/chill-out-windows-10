@@ -28,7 +28,17 @@ function Set-Reg ($regPath, $name, $value) {
         New-Item -Path $regPath -Force | Out-Null
     }
     New-ItemProperty -Path $regPath -Name $name -Value $value -PropertyType `
-        "DWORD" -Force | Out-ull
+        "DWORD" -Force | Out-Null
+}
+
+#---------------------------------------------------------------
+# This function announces a new section to work on.
+#---------------------------------------------------------------
+function Write-Section ($string) {
+
+    Write-Host "--------------------------------------------------------------------------------------" -ForegroundColor Yellow
+    Write-Host $string -ForegroundColor Yellow
+    Write-Host "--------------------------------------------------------------------------------------" -ForegroundColor Yellow
 }
 
 # Some paths that get used more than once
@@ -36,10 +46,9 @@ $ContentDeliveryPath = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentD
 $WindowsSearchPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search"
 $UACPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
 
-#---------------------------------------------------------------
-# Disable ad-and-product-related stuff, as well as the action
-# and notification center.
-#---------------------------------------------------------------
+
+Write-Section "Disable ad-and-product-related stuff, as well as the action and notification center."
+
 
 # Don't let apps use your advertising ID.
 Write-Host "Disabling use of Advertising Id..."
@@ -66,9 +75,9 @@ Set-Reg "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer" `
 Write-Host "Disabling Start Menu app suggestions..."
 Set-Reg $ContentDeliveryPath "SystemPaneSuggestionsEnabled" 0x0
 
-#---------------------------------------------------------------
-# Streamline Windows search to only grab from your indexed paths.
-#---------------------------------------------------------------
+
+Write-Section "Streamline Windows search to only grab from your indexed paths."
+
 
 # Disable Cortana--skip this one if you want. I've never found it
 # super useful on Desktop, and it's a memory hog.
@@ -92,9 +101,9 @@ Write-Host "Disabling web suggestions in Windows Search..."
 Set-Reg $WindowsSearchPath "ConnectedSearchUseWeb" 0x0
 Set-Reg $WindowsSearchPath "DisableWebSearch" 0x1
 
-#---------------------------------------------------------------
-# Disable feedback-and-data-collection stuff.
-#---------------------------------------------------------------
+
+Write-Section "Disable feedback-and-data-collection stuff."
+
 
 # This one I recommend leaving in (developer bias)--it'll make Windows better. 
 # But if you're jumpy about having your data collected (about OS usage), disable it.
@@ -121,29 +130,36 @@ Write-Host "Disabling P2P Windows Update download and hosting..."
 Set-Reg "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization\Config" `
 "DownloadMode" 0x0
 
-#---------------------------------------------------------------
-# These are scheduled tasks related to feedback and location.
-#---------------------------------------------------------------
+
+Write-Section "Disabling scheduled tasks related to feedback and location."
+
 
 # We killed off the CEIP, so we won't need these tasks.
 Write-Host "Disabling CEIP scheduled tasks..."
-Disable-ScheduledTask -TaskName "Microsoft\Windows\Customer Experience Improvement Program\Consolidator"
-Disable-ScheduledTask -TaskName "Microsoft\Windows\Customer Experience Improvement Program\KernelCeipTask"
-Disable-ScheduledTask -TaskName "Microsoft\Windows\Customer Experience Improvement Program\UsbCeip"
+Disable-ScheduledTask -TaskName "Microsoft\Windows\Customer Experience Improvement Program\Consolidator" |
+Out-Null
+Disable-ScheduledTask -TaskName "Microsoft\Windows\Customer Experience Improvement Program\KernelCeipTask" |
+Out-Null
+Disable-ScheduledTask -TaskName "Microsoft\Windows\Customer Experience Improvement Program\UsbCeip" |
+Out-Null
 
 # Remove the DMClient task (also sends feedback)
 Write-Host "Disabling Feedback scheduled tasks..."
-Disable-ScheduledTask -TaskName "Microsoft\Windows\Feedback\Siuf\DmClient"
+Disable-ScheduledTask -TaskName "Microsoft\Windows\Feedback\Siuf\DmClient" |
+Out-Null
 
 # Disable location-based tasks and map tasks
 Write-Host "Disabling location-based scheduled tasks..."
-Disable-ScheduledTask -TaskName "Microsoft\Windows\Location\Notifications"
-Disable-ScheduledTask -TaskName "Microsoft\Windows\Maps\MapsToastTask"
-Disable-ScheduledTask -TaskName "Microsoft\Windows\Maps\MapsUpdateTask"
+Disable-ScheduledTask -TaskName "Microsoft\Windows\Location\Notifications" |
+Out-Null
+Disable-ScheduledTask -TaskName "Microsoft\Windows\Maps\MapsToastTask" |
+Out-Null
+Disable-ScheduledTask -TaskName "Microsoft\Windows\Maps\MapsUpdateTask" |
+Out-Null
 
-#---------------------------------------------------------------
-# Disable User Account Control.
-#---------------------------------------------------------------
+
+Write-Section "Disable User Account Control."
+
 
 # This is going to make admins be able to run programs in privileged mode
 # without getting prompted. If you're a sysadmin at work, this is bad practice.  
@@ -153,12 +169,9 @@ Set-Reg $UACPath "EnableLUA" 0x0 "DWORD"
 Set-Reg $UACPath "ConsentPromptBehaviorAdmin" 0x0 "DWORD"
 
 
-#---------------------------------------------------------------
-# Remove Unnecessary app packages and reclaim some disk.
-# But mostlyt'll also delete all those useless tiles
-# If you get cold feet, you can always retrieve them from the
-# Windows Store.
-#---------------------------------------------------------------
+
+Write-Section "Remove unnecessary apps."
+
 
 # Not even Microsoft can properly elaborate on what this does.
 Write-Host "Removing Appconnector..."
